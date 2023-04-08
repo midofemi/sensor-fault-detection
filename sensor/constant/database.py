@@ -1,0 +1,2 @@
+DATABASE_NAME = "ineuron1" 
+COLLECTION_NAME = "car1"
