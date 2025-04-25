@@ -1,27 +1,23 @@
-# Builder stage
-FROM python:3.9 as builder
-# Set the working directory
-WORKDIR /build
-# Copy the Python project files first
-COPY setup.py .
-COPY requirements.txt .
-# Install the project dependencies
-RUN pip install --upgrade pip \
-    && pip install --user -r requirements.txt
-# Copy the rest of the project files
-COPY . .
-# Build/install the project
-RUN pip install --user .
-# Final stage
-FROM python:3.9-slim
-# Copy installed packages from the builder stage
-COPY --from=builder /root/.local /root/.local
-# Set the working directory
-WORKDIR /app
-# Copy the application code
-COPY . .
-# Make sure scripts in .local are usable:
-ENV PATH=/root/.local/bin:$PATH
+# Stage 1: Build layer
+FROM python:3.8.5-slim-buster AS builder
+RUN apt update -y && apt install awscli -y
 
-# Run the application
-CMD ["python","app.py"]
+WORKDIR /app
+COPY . /app
+
+# Install dependencies into a virtual environment or temp dir
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
+
+# Stage 2: Final lightweight image
+FROM python:3.8.5-slim-buster
+
+WORKDIR /app
+
+# Copy only the installed dependencies from builder
+COPY --from=builder /install /usr/local
+
+# Copy source code (you can filter if needed)
+COPY --from=builder /app /app
+
+CMD ["python3", "main.py"]
