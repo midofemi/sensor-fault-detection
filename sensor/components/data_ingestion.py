@@ -22,7 +22,12 @@ class DataIngestion:
         try:
             logging.info("Exporting data from mongodb to feature store") 
             sensor_data = SensorData()
-            dataframe = sensor_data.export_collection_as_dataframe(collection_name=self.data_ingestion_config.collection_name) 
+            dataframe = sensor_data.export_collection_as_dataframe(collection_name=self.data_ingestion_config.collection_name)
+            if dataframe.empty:
+                logging.warning("Exported DataFrame is empty. No data written to feature store.")
+            else:
+                logging.info(f"Exported DataFrame shape: {dataframe.shape}")
+
             feature_store_file_path = self.data_ingestion_config.feature_store_file_path    
 
             dir_path = os.path.dirname(feature_store_file_path)

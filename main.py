@@ -15,8 +15,11 @@ from fastapi.responses import Response
 from sensor.ml.model.estimator import ModelResolver,TargetValueMapping
 from sensor.utils.main_utils import load_object
 from fastapi.middleware.cors import CORSMiddleware
-import os
 import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import RobustScaler
+from sklearn.pipeline import Pipeline
 
 env_file_path=os.path.join(os.getcwd(),"env.yaml")
 
@@ -52,10 +55,38 @@ async def train_route():
     except Exception as e:
         return Response(f"Error Occurred! {e}")
     
-@app.get("/predict")
+@app.post("/predict")
 async def predict_route(request:Request,file: UploadFile = File(...)):
     try:
+        #get data from user csv file
         df = pd.read_csv(file.file)
+        # Replace "na" with NaN
+        df.replace({"na": np.nan}, inplace=True)
+
+        # Define columns to remove
+        columns_to_remove = ['br_000', 'bq_000', 'bp_000', 'ab_000', 'cr_000', 'bo_000', 'bn_000']
+
+        # Drop the specified columns
+        df = df.drop(columns=columns_to_remove)
+
+        # Initialize the preprocessing transformers
+        robust_scaler = RobustScaler()
+        simple_imputer = SimpleImputer(strategy="constant", fill_value=0)
+
+        # Create a pipeline for preprocessing
+        preprocessor = Pipeline(
+            steps=[
+                ("Imputer", simple_imputer),
+                ("RobustScaler", robust_scaler)
+            ]
+        )
+
+        # Fit and transform the data with the preprocessor
+        df_processed = preprocessor.fit_transform(df)
+
+        # Convert the NumPy array back to a DataFrame with column names
+        df = pd.DataFrame(df_processed, columns=df.columns)
+        #print(df)
         model_resolver = ModelResolver(model_dir=SAVED_MODEL_DIR)
         if not model_resolver.is_model_exists():
             return Response("Model is not available")
@@ -65,7 +96,9 @@ async def predict_route(request:Request,file: UploadFile = File(...)):
         y_pred = model.predict(df)
         df['predicted_column'] = y_pred
         df['predicted_column'].replace(TargetValueMapping().reverse_mapping(),inplace=True)
+        df.to_csv("C:/Users/midof/OneDrive/Documents/Dataset/aps_failure123455555555555.csv")
         return df.to_html()
+        #decide how to return file to user.
         
     except Exception as e:
         raise Response(f"Error Occured! {e}")

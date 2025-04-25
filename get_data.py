@@ -5,7 +5,7 @@ from main import set_env_variable
 import os
 
 if __name__=='__main__':
-    data_file_path="C:/Users/midof/OneDrive/Desktop/INeuron/Data_Science_Project/Industry_Ready_Proj/Sensor_Detection_Project/aps_failure_training_set1.csv"
+    data_file_path="C:/Users/midof/OneDrive/Desktop/INeuron/Data_Science_Project/Industry_Ready_Proj/sensor-fault-detection-GIT/aps_failure_training_set1.csv"
     env_file_path="C:/Users/midof/OneDrive/Desktop/INeuron/Data_Science_Project/Industry_Ready_Proj/Sensor_Detection_Project/env.yaml"
     set_env_variable(env_file_path)
     print(os.environ['MONGO_DB_URL'])

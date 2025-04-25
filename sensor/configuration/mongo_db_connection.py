@@ -4,6 +4,8 @@ from sensor.constant.database import DATABASE_NAME
 from sensor.constant.env_variable import MONGODB_URL_KEY
 import certifi
 import os
+from sensor.logger import logging
+
 ca = certifi.where()
 
 class MongoDBClient:
@@ -23,6 +25,8 @@ class MongoDBClient:
             self.client = MongoDBClient.client
             self.database = self.client[database_name]
             self.database_name = database_name
+            logging.info(f"[MONGODB] Connected to database: {database_name}")
+            logging.info(f"[MONGODB] Collections: {self.database.list_collection_names()}")
         except Exception as e:
             raise e
         
