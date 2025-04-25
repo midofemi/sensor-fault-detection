@@ -1,8 +1,27 @@
-FROM python:3.8.5-slim-buster
-RUN apt update -y && apt install awscli -y
+# Builder stage
+FROM python:3.9 as builder
+# Set the working directory
+WORKDIR /build
+# Copy the Python project files first
+COPY setup.py .
+COPY requirements.txt .
+# Install the project dependencies
+RUN pip install --upgrade pip \
+    && pip install --user -r requirements.txt
+# Copy the rest of the project files
+COPY . .
+# Build/install the project
+RUN pip install --user .
+# Final stage
+FROM python:3.9-slim
+# Copy installed packages from the builder stage
+COPY --from=builder /root/.local /root/.local
+# Set the working directory
 WORKDIR /app
+# Copy the application code
+COPY . .
+# Make sure scripts in .local are usable:
+ENV PATH=/root/.local/bin:$PATH
 
-COPY . /app
-RUN pip install -r requirements.txt
-
-CMD ["python3", "main.py"]
+# Run the application
+CMD ["python","app.py"]
